@@ -4,20 +4,31 @@ from datetime import date,timedelta
 from os import path
 import re
 
+# log_path=[
+#     {"machineID":"D07#","logPath":r"U:\激光钻机\一厂激光钻机\7#"},
+#     {"machineID":"D08#","logPath":r"U:\激光钻机\一厂激光钻机\8#"},
+#     {"machineID":"D09#","logPath":r"U:\激光钻机\一厂激光钻机\9#"},
+#     {"machineID":"D10#","logPath":r"U:\激光钻机\一厂激光钻机\10#"},
+#     {"machineID":"D11#","logPath":r"U:\激光钻机\一厂激光钻机\11#"},
+#     {"machineID":"D12#","logPath":r"U:\激光钻机\一厂激光钻机\12#"},
+#     {"machineID":"Q01#","logPath":r"U:\激光钻机\二厂激光钻机\Q01"},
+#     {"machineID":"Q02#","logPath":r"U:\激光钻机\二厂激光钻机\Q02"}
+# ]
+
 log_path=[
-    {"machineID":"D07#","logPath":r"U:\激光钻机\一厂激光钻机\7#"},
-    {"machineID":"D08#","logPath":r"U:\激光钻机\一厂激光钻机\8#"},
-    {"machineID":"D09#","logPath":r"U:\激光钻机\一厂激光钻机\9#"},
-    {"machineID":"D10#","logPath":r"U:\激光钻机\一厂激光钻机\10#"},
-    {"machineID":"D11#","logPath":r"U:\激光钻机\一厂激光钻机\11#"},
-    {"machineID":"D12#","logPath":r"U:\激光钻机\一厂激光钻机\12#"},
-    {"machineID":"Q01#","logPath":r"U:\激光钻机\二厂激光钻机\Q01"},
-    {"machineID":"Q02#","logPath":r"U:\激光钻机\二厂激光钻机\Q02"}
+    {"machineID":"D07#","logPath":r"\\172.29.250.14\DevData1\激光钻机\一厂激光钻机\7#"},
+    {"machineID":"D08#","logPath":r"\\172.29.250.14\DevData1\激光钻机\一厂激光钻机\8#"},
+    {"machineID":"D09#","logPath":r"\\172.29.250.14\DevData1\激光钻机\一厂激光钻机\9#"},
+    {"machineID":"D10#","logPath":r"\\172.29.250.14\DevData1\激光钻机\一厂激光钻机\10#"},
+    {"machineID":"D11#","logPath":r"\\172.29.250.14\DevData1\激光钻机\一厂激光钻机\11#"},
+    {"machineID":"D12#","logPath":r"\\172.29.250.14\DevData1\激光钻机\一厂激光钻机\12#"},
+    {"machineID":"Q01#","logPath":r"\\172.29.250.14\DevData1\激光钻机\二厂激光钻机\Q01"},
+    {"machineID":"Q02#","logPath":r"\\172.29.250.14\DevData1\激光钻机\二厂激光钻机\Q02"}
 ]
 
-start_date=date(2024,8,1)
-end_date=date(2024,10,11)
-filter=r'74653..-(02|09)'
+start_date=date(2024,9,15)
+end_date=date(2024,10,15)
+filter=r'98181A0\-\d+'
 
 save_work_file=r'D:\镭射加工记录.csv'
 save_cond_file=r'D:\镭射参数记录.csv'
