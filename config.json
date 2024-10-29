@@ -1,4 +1,5 @@
 {
+    "database":"database.db",
     "machines":[
         {
             "name":"Q01#",
