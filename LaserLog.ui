@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,1">
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout" stretch="5,0,2">
+     <layout class="QVBoxLayout" name="verticalLayout" stretch="5,0,3">
       <item>
        <widget class="QTableView" name="tblLaserLog">
         <property name="minimumSize">

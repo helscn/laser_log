@@ -9,7 +9,7 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QMessageBox,QFileDialog
 from PyQt5.QtCore import QModelIndex, Qt
 from PyQt5.QtGui import QIcon
-import icon_rc
+from LaserLog_ui import Ui_MainWindow
 
 # Loading config
 CONFIG_FILE=r'config.json'
@@ -69,7 +69,7 @@ class LaserCondition(object):
     def create_model(self):
         model=[]
         for v in self.lines[1:]:
-            model.append(['' if v[8]=='0' else v[8],v[2],v[9],v[4],v[5],v[6],v[13]])
+            model.append(['' if v[8]=='0' else v[8],v[2],'' if v[9]=='0.000' else v[9],v[4],v[5],v[6],v[13]])
         return model
 
     def save_as(self, filePath) -> None:
@@ -134,6 +134,7 @@ class Database(object):
         if create_table:
             cursor.execute('''CREATE TABLE sinstatis
                 (machine Text,datetime Text, lot Text,prg Text COLLATE NOCASE,cond Text COLLATE NOCASE);''')
+            cursor.execute('''CREATE INDEX idx ON sinstatis (datetime);''')
             self.session.commit()
 
     def close(self):
@@ -226,18 +227,18 @@ class Database(object):
     def search_log(self,prg='',cond=''):
         if prg:
             if cond:
-                SQL='SELECT datetime,machine,prg,cond FROM sinstatis WHERE prg LIKE ? AND cond LIKE ? ORDER BY datetime DESC LIMIT 500;'
-                query=(prg,cond)
+                SQL='SELECT datetime,machine,prg,cond FROM sinstatis WHERE prg LIKE ? AND cond LIKE ? ORDER BY datetime DESC;'
+                query=(prg+'%',cond+'%')
             else:
-                SQL='SELECT datetime,machine,prg,cond FROM sinstatis WHERE prg LIKE ? ORDER BY datetime DESC LIMIT 500;'
-                query=(prg,)
+                SQL='SELECT datetime,machine,prg,cond FROM sinstatis WHERE prg LIKE ? ORDER BY datetime DESC;'
+                query=(prg+'%',)
         else:
             if cond:
-                SQL='SELECT datetime,machine,prg,cond FROM sinstatis WHERE cond LIKE ? ORDER BY datetime DESC LIMIT 500;'
-                query=(cond,)
+                SQL='SELECT datetime,machine,prg,cond FROM sinstatis WHERE cond LIKE ? ORDER BY datetime DESC;'
+                query=(cond+'%',)
             else:
-                raise ValueError('必须提供搜索的型号或参数！')
-
+                SQL='SELECT datetime,machine,prg,cond FROM sinstatis ORDER BY datetime DESC;'
+                query=()
         return self.session.execute(SQL,query).fetchall()
 
 
@@ -248,9 +249,9 @@ class TblLaserLogModel(QtCore.QAbstractTableModel):
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int):
         columns=[
-            '时间',
-            '机台',
-            '程序',
+            '          时间          ',
+            '    机台    ',
+            '              程序       ',
             '参数'
         ]
         if role == QtCore.Qt.DisplayRole:
@@ -279,12 +280,12 @@ class TblLaserCondModel(QtCore.QAbstractTableModel):
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int):
         columns=[
-            '分组',
-            '脉宽',
-            '能量',
-            '发数',
-            '光圈',
-            '准直镜',
+            '   分组   ',
+            '     脉宽     ',
+            '      能量      ',
+            '    发数    ',
+            '    光圈    ',
+            '   准直镜   ',
             '备注'
         ]
         if role == QtCore.Qt.DisplayRole:
@@ -305,92 +306,13 @@ class TblLaserCondModel(QtCore.QAbstractTableModel):
             col = index.column()
             return str(self.mydata[row][col])
 
-class Ui_MainWindow(object):
-    def setupUi(self, MainWindow,config):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1046, 631)
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
-        self.horizontalLayout = QtWidgets.QHBoxLayout(self.centralwidget)
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        self.verticalLayout = QtWidgets.QVBoxLayout()
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.tblLaserLog = QtWidgets.QTableView(self.centralwidget)
-        self.tblLaserLog.setMinimumSize(QtCore.QSize(400, 0))
-        self.tblLaserLog.setObjectName("tblLaserLog")
-        self.verticalLayout.addWidget(self.tblLaserLog)
-        self.line = QtWidgets.QFrame(self.centralwidget)
-        self.line.setFrameShape(QtWidgets.QFrame.HLine)
-        self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.line.setObjectName("line")
-        self.verticalLayout.addWidget(self.line)
-        self.tblLaserCond = QtWidgets.QTableView(self.centralwidget)
-        self.tblLaserCond.setMinimumSize(QtCore.QSize(400, 0))
-        self.tblLaserCond.setObjectName("tblLaserCond")
-        self.verticalLayout.addWidget(self.tblLaserCond)
-        self.verticalLayout.setStretch(0, 5)
-        self.verticalLayout.setStretch(2, 2)
-        self.horizontalLayout.addLayout(self.verticalLayout)
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.verticalLayout_4 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_4.setObjectName("verticalLayout_4")
-        self.label = QtWidgets.QLabel(self.centralwidget)
-        self.label.setMaximumSize(QtCore.QSize(100, 100))
-        self.label.setObjectName("label")
-        self.verticalLayout_4.addWidget(self.label)
-        self.pnFilter = QtWidgets.QLineEdit(self.centralwidget)
-        self.pnFilter.setMinimumSize(QtCore.QSize(150, 30))
-        self.pnFilter.setMaximumSize(QtCore.QSize(16777215, 30))
-        self.pnFilter.setObjectName("pnFilter")
-        self.verticalLayout_4.addWidget(self.pnFilter)
-        self.label_2 = QtWidgets.QLabel(self.centralwidget)
-        self.label_2.setObjectName("label_2")
-        self.verticalLayout_4.addWidget(self.label_2)
-        self.condFilter = QtWidgets.QLineEdit(self.centralwidget)
-        self.condFilter.setMinimumSize(QtCore.QSize(150, 30))
-        self.condFilter.setMaximumSize(QtCore.QSize(16777215, 30))
-        self.condFilter.setObjectName("condFilter")
-        self.verticalLayout_4.addWidget(self.condFilter)
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.verticalLayout_4.addItem(spacerItem)
-        self.btnStartSearch = QtWidgets.QPushButton(self.centralwidget)
-        self.btnStartSearch.setMinimumSize(QtCore.QSize(0, 40))
-        self.btnStartSearch.setObjectName("btnStartSearch")
-        self.verticalLayout_4.addWidget(self.btnStartSearch)
-        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.verticalLayout_4.addItem(spacerItem1)
-        self.btnRefreshCache = QtWidgets.QPushButton(self.centralwidget)
-        self.btnRefreshCache.setMinimumSize(QtCore.QSize(0, 40))
-        self.btnRefreshCache.setObjectName("btnRefreshCache")
-        self.verticalLayout_4.addWidget(self.btnRefreshCache)
-        spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_4.addItem(spacerItem2)
-        self.verticalLayout_2.addLayout(self.verticalLayout_4)
-        self.verticalLayout_5 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_5.setObjectName("verticalLayout_5")
-        self.btnSaveCond = QtWidgets.QPushButton(self.centralwidget)
-        self.btnSaveCond.setMinimumSize(QtCore.QSize(0, 40))
-        self.btnSaveCond.setObjectName("btnSaveCond")
-        self.verticalLayout_5.addWidget(self.btnSaveCond)
-        self.verticalLayout_2.addLayout(self.verticalLayout_5)
-        self.verticalLayout_2.setStretch(0, 2)
-        self.verticalLayout_2.setStretch(1, 1)
-        self.horizontalLayout.addLayout(self.verticalLayout_2)
-        self.horizontalLayout.setStretch(0, 3)
-        self.horizontalLayout.setStretch(1, 1)
-        MainWindow.setCentralWidget(self.centralwidget)
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
-        self.statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(self.statusbar)
 
+class MyUi(Ui_MainWindow):
+    def init(self, config):
         self.init_signal_connect()
         self.config=config
         self.cond=None
         self.logs=[[]]
-
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def init_signal_connect(self):
         self.btnStartSearch.clicked.connect(self.search_log)
@@ -422,7 +344,9 @@ class Ui_MainWindow(object):
         self.logs=db.search_log(prg=self.pnFilter.text(),cond=self.condFilter.text())
         model=TblLaserLogModel(self.logs)
         self.tblLaserLog.setModel(model)
-        self.tblLaserLog.resizeColumnsToContents()
+        header=self.tblLaserLog.horizontalHeader()
+        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
         self.statusbar.showMessage('一共找到 {} 条生产记录。'.format(model.rowCount()))
         db.close()
         self.enable_btn()
@@ -448,8 +372,9 @@ class Ui_MainWindow(object):
             model=TblLaserCondModel()
             self.statusbar.showMessage('')
         self.tblLaserCond.setModel(model)
-        self.tblLaserCond.resizeColumnsToContents()
-
+        header=self.tblLaserCond.horizontalHeader()
+        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(6, QtWidgets.QHeaderView.Stretch)
 
     def save_laser_cond(self):
         if self.cond:
@@ -474,7 +399,8 @@ if __name__ == "__main__":
     icon=QIcon(":/icon.ico")
     App.setWindowIcon(icon)
     MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow,CONFIG)
+    ui = MyUi()
+    ui.setupUi(MainWindow)
+    ui.init(CONFIG)
     MainWindow.show()
     sys.exit(App.exec_())

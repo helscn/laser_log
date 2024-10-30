@@ -35,7 +35,7 @@ class Ui_MainWindow(object):
         self.tblLaserCond.setObjectName("tblLaserCond")
         self.verticalLayout.addWidget(self.tblLaserCond)
         self.verticalLayout.setStretch(0, 5)
-        self.verticalLayout.setStretch(2, 2)
+        self.verticalLayout.setStretch(2, 3)
         self.horizontalLayout.addLayout(self.verticalLayout)
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
         self.verticalLayout_2.setObjectName("verticalLayout_2")
