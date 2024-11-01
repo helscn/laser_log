@@ -357,7 +357,7 @@ class MyWindow(QtWidgets.QMainWindow,Ui_MainWindow):
         self.cond.name=item[4]+'.cnd'
         if self.cond:
             model=TblLaserCondModel(self.cond.create_model())
-            self.statusbar.showMessage('当前镭射参数：'+item[3])
+            self.statusbar.showMessage('当前镭射参数：'+item[4])
         else:
             model=TblLaserCondModel()
             self.statusbar.showMessage('')
