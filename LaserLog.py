@@ -5,10 +5,10 @@ import os
 import json
 import sqlite3
 from datetime import datetime
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import QMessageBox,QFileDialog
-from PyQt5.QtCore import QModelIndex, Qt
-from PyQt5.QtGui import QIcon
+from PySide6 import QtWidgets, QtCore
+from PySide6.QtWidgets import QMessageBox, QFileDialog
+from PySide6.QtCore import QModelIndex, Qt
+from PySide6.QtGui import QIcon
 from LaserLog_ui import Ui_MainWindow
 
 # Loading config
@@ -224,21 +224,9 @@ class Database(object):
             if machine['name'] not in self.datetime:
                 self.datetime[machine['name']]='0000/00/00 00:00:00'
 
-    def search_log(self,prg='',cond=''):
-        if prg:
-            if cond:
-                SQL='SELECT datetime,machine,prg,cond FROM sinstatis WHERE prg LIKE ? AND cond LIKE ? ORDER BY datetime DESC;'
-                query=(prg+'%',cond+'%')
-            else:
-                SQL='SELECT datetime,machine,prg,cond FROM sinstatis WHERE prg LIKE ? ORDER BY datetime DESC;'
-                query=(prg+'%',)
-        else:
-            if cond:
-                SQL='SELECT datetime,machine,prg,cond FROM sinstatis WHERE cond LIKE ? ORDER BY datetime DESC;'
-                query=(cond+'%',)
-            else:
-                SQL='SELECT datetime,machine,prg,cond FROM sinstatis ORDER BY datetime DESC;'
-                query=()
+    def search_log(self,prg='%',cond='%'):
+        SQL='SELECT datetime,machine,lot,prg,cond FROM sinstatis WHERE prg LIKE ? AND cond LIKE ? ORDER BY datetime DESC;'
+        query=(prg if prg else '%',cond if cond else '%')
         return self.session.execute(SQL,query).fetchall()
 
 
@@ -251,6 +239,7 @@ class TblLaserLogModel(QtCore.QAbstractTableModel):
         columns=[
             '          时间          ',
             '    机台    ',
+            '          工单          ',
             '              程序       ',
             '参数'
         ]
@@ -261,7 +250,7 @@ class TblLaserLogModel(QtCore.QAbstractTableModel):
                 return str(section+1)
 
     def columnCount(self, parent=None):
-        return 4
+        return 5
 
     def rowCount(self, parent=None):
         return len(self.mydata)
@@ -306,14 +295,15 @@ class TblLaserCondModel(QtCore.QAbstractTableModel):
             col = index.column()
             return str(self.mydata[row][col])
 
-
-class MyUi(Ui_MainWindow):
-    def init(self, config):
+class MyWindow(QtWidgets.QMainWindow,Ui_MainWindow):
+    def __init__(self, config=None):
+        super().__init__()
+        self.setupUi(self)
         self.init_signal_connect()
         self.config=config
         self.cond=None
         self.logs=[[]]
-
+    
     def init_signal_connect(self):
         self.btnStartSearch.clicked.connect(self.search_log)
         self.btnRefreshCache.clicked.connect(self.refresh_database)
@@ -357,14 +347,14 @@ class MyUi(Ui_MainWindow):
         db.open()
         db.update_laser_log(callback=self.statusbar)
         db.close()
-        QMessageBox.information(None,'更新完成','已经完成本地数据库缓存的更新！',QMessageBox.Yes)
+        self.statusbar.showMessage('已经完成本地数据库缓存的更新！')
         self.enable_btn()
     
     def search_cond(self,index:QModelIndex):
         db=Database(self.config['database'],self.config['machines'])
         item=self.logs[index.row()]
-        self.cond=db.get_cnd(item[1],item[0],item[2],item[3])
-        self.cond.name=item[3]+'.cnd'
+        self.cond=db.get_cnd(item[1],item[0],item[3],item[4])
+        self.cond.name=item[4]+'.cnd'
         if self.cond:
             model=TblLaserCondModel(self.cond.create_model())
             self.statusbar.showMessage('当前镭射参数：'+item[3])
@@ -398,9 +388,7 @@ if __name__ == "__main__":
     App = QtWidgets.QApplication(sys.argv)
     icon=QIcon(":/icon.ico")
     App.setWindowIcon(icon)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = MyUi()
-    ui.setupUi(MainWindow)
-    ui.init(CONFIG)
-    MainWindow.show()
-    sys.exit(App.exec_())
+    Window = MyWindow(config=CONFIG)
+    Window.show()
+    Window.refresh_database()
+    sys.exit(App.exec())
