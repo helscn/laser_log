@@ -81,6 +81,9 @@ class LaserCondition(object):
     def update_from_log(self, filePath, drillDateTime, prgName, condName):
         # 从指定的参数加工记录中载入加工参数
 
+        if not os.path.isfile(filePath):
+            return False
+
         if type(drillDateTime) is str:
             drillDateTime=str_to_date(drillDateTime)
 
@@ -174,6 +177,10 @@ class Database(object):
     def update_laser_log(self,callback=None):
         self.update_datetime()
         for machine in self.machines:
+            if callback:
+                callback.showMessage('正在分析文件夹：'+machine['logPath'])
+            if not os.path.isdir(machine['logPath']):
+                continue
             latest_time=self.datetime[machine['name']]
             yyyy=latest_time[:4]
             yy=yyyy[-2:]
@@ -250,7 +257,7 @@ class TblLaserLogModel(QtCore.QAbstractTableModel):
                 return str(section+1)
 
     def columnCount(self, parent=None):
-        return 5
+        return len(self.mydata[0])
 
     def rowCount(self, parent=None):
         return len(self.mydata)
@@ -284,7 +291,7 @@ class TblLaserCondModel(QtCore.QAbstractTableModel):
                 return str(section+1)
 
     def columnCount(self, parent=None):
-        return 7
+        return len(self.mydata[0])
 
     def rowCount(self, parent=None):
         return len(self.mydata)
@@ -351,20 +358,23 @@ class MyWindow(QtWidgets.QMainWindow,Ui_MainWindow):
         self.enable_btn()
     
     def search_cond(self,index:QModelIndex):
-        db=Database(self.config['database'],self.config['machines'])
         item=self.logs[index.row()]
+        db=Database(self.config['database'],self.config['machines'])
+        db.open()
         self.cond=db.get_cnd(item[1],item[0],item[3],item[4])
-        self.cond.name=item[4]+'.cnd'
+        db.close()
         if self.cond:
+            self.cond.name=item[4]+'.cnd'
             model=TblLaserCondModel(self.cond.create_model())
             self.statusbar.showMessage('当前镭射参数：'+item[4])
         else:
             model=TblLaserCondModel()
-            self.statusbar.showMessage('')
+            self.statusbar.showMessage('未找到镭射参数：'+item[4])
         self.tblLaserCond.setModel(model)
-        header=self.tblLaserCond.horizontalHeader()
-        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(6, QtWidgets.QHeaderView.Stretch)
+        if self.cond:
+            header=self.tblLaserCond.horizontalHeader()
+            header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(6, QtWidgets.QHeaderView.Stretch)
 
     def save_laser_cond(self):
         if self.cond:
