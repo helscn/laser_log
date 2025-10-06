@@ -238,9 +238,13 @@ class Database(object):
 
 
 class TblLaserLogModel(QtCore.QAbstractTableModel):
-    def __init__(self, data=[[]], parent=None):
+    def __init__(self, data=None, parent=None):
         super().__init__(parent)
-        self.mydata = data
+        if data:
+            self.mydata = data
+        else:
+            self.mydata=[['','','','']]
+
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int):
         columns=[
@@ -270,9 +274,12 @@ class TblLaserLogModel(QtCore.QAbstractTableModel):
 
 
 class TblLaserCondModel(QtCore.QAbstractTableModel):
-    def __init__(self, data=[[]], parent=None):
+    def __init__(self, data=None, parent=None):
         super().__init__(parent)
-        self.mydata = data
+        if data:
+            self.mydata = data
+        else:
+            self.mydata=[['','','','','','','']]        
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int):
         columns=[
@@ -310,6 +317,17 @@ class MyWindow(QtWidgets.QMainWindow,Ui_MainWindow):
         self.config=config
         self.cond=None
         self.logs=[[]]
+        self.log_model=TblLaserLogModel()
+        self.cond_model=TblLaserCondModel()
+        self.tblLaserLog.setModel(self.log_model)
+        self.tblLaserCond.setModel(self.cond_model)
+        log_header=self.tblLaserLog.horizontalHeader()
+        log_header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        log_header.setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
+        cond_header=self.tblLaserCond.horizontalHeader()
+        cond_header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        cond_header.setSectionResizeMode(6, QtWidgets.QHeaderView.Stretch)
+
     
     def init_signal_connect(self):
         self.btnStartSearch.clicked.connect(self.search_log)
@@ -334,20 +352,6 @@ class MyWindow(QtWidgets.QMainWindow,Ui_MainWindow):
         self.pnFilter.setDisabled(False)
         self.condFilter.setDisabled(False)
 
-    def search_log(self):
-        self.disable_btn()
-        db=Database(self.config['database'],self.config['machines'])
-        db.open()
-        self.logs=db.search_log(prg=self.pnFilter.text(),cond=self.condFilter.text())
-        model=TblLaserLogModel(self.logs)
-        self.tblLaserLog.setModel(model)
-        header=self.tblLaserLog.horizontalHeader()
-        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
-        self.statusbar.showMessage('一共找到 {} 条生产记录。'.format(model.rowCount()))
-        db.close()
-        self.enable_btn()
-
     def refresh_database(self):
         self.disable_btn()
         db=Database(self.config['database'],self.config['machines'])
@@ -357,24 +361,40 @@ class MyWindow(QtWidgets.QMainWindow,Ui_MainWindow):
         self.statusbar.showMessage('已经完成本地数据库缓存的更新！')
         self.enable_btn()
     
+    def search_log(self):
+        self.disable_btn()
+        db=Database(self.config['database'],self.config['machines'])
+        db.open()
+        self.logs=db.search_log(prg=self.pnFilter.text(),cond=self.condFilter.text())
+        log_model=TblLaserLogModel(self.logs)
+        self.tblLaserLog.setModel(log_model)
+        header=self.tblLaserLog.horizontalHeader()
+        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
+        self.statusbar.showMessage('一共找到 {} 条生产记录。'.format(log_model.rowCount()))
+        self.tblLaserCond.setModel(self.cond_model)
+        db.close()
+        self.enable_btn()
+
     def search_cond(self,index:QModelIndex):
         item=self.logs[index.row()]
         db=Database(self.config['database'],self.config['machines'])
         db.open()
         self.cond=db.get_cnd(item[1],item[0],item[3],item[4])
         db.close()
+
         if self.cond:
             self.cond.name=item[4]+'.cnd'
             model=TblLaserCondModel(self.cond.create_model())
             self.statusbar.showMessage('当前镭射参数：'+item[4])
+            self.tblLaserCond.setModel(model)
         else:
-            model=TblLaserCondModel()
             self.statusbar.showMessage('未找到镭射参数：'+item[4])
-        self.tblLaserCond.setModel(model)
-        if self.cond:
-            header=self.tblLaserCond.horizontalHeader()
-            header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-            header.setSectionResizeMode(6, QtWidgets.QHeaderView.Stretch)
+            self.tblLaserCond.setModel(self.cond_model)
+
+        header=self.tblLaserCond.horizontalHeader()
+        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(6, QtWidgets.QHeaderView.Stretch)
 
     def save_laser_cond(self):
         if self.cond:
